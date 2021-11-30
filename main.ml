@@ -25,7 +25,7 @@ let top_level_loop () =
       let tm = s token (from_string (multiline (String.split_on_char ';' (read_line())) "")) in
       let tyTm = typeof ctx tm in
       print_endline (string_of_term (eval tm) ^ " : " ^ string_of_ty tyTm);
-      loop ctx
+      loop ctx (*(execute (vctx, tctx) c) *)
     with
        Lexical_error ->
          print_endline "lexical error";
@@ -39,7 +39,7 @@ let top_level_loop () =
      | End_of_file ->
          print_endline "...bye!!!"
   in
-    loop emptyctx
+    loop (emptyctx, emptyctx)
   ;;
 
 top_level_loop ()

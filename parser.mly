@@ -34,18 +34,15 @@
 %token <string> STRINGV
 
 %start s
-%type <Lambda.term> s
+%type <Lambda.command> s
 
 %%
 
 s :
-    term EOF{ $1 }
-    | context { $1 }
-
-
-context :
-    STRINGV EQ term
-      { addbinding ctx $1 TyBool }
+    STRINGV EQ term EOF
+        {Bind ($1,$3)}
+    | term EOF
+        { Eval $1 }
 
 term :
     appTerm

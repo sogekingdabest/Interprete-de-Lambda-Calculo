@@ -7,10 +7,10 @@ type ty =
   | TyArr of ty * ty
 ;;
 
-type context =
+type tcontext =
   (string * ty) list
 ;;
-
+  
 type term =
     TmTrue
   | TmFalse
@@ -26,21 +26,36 @@ type term =
   | TmFix of term
 ;;
 
+(*get del tipo*)
+type command = 
+  Eval of term
+  | Bind of string * term
 
 (* CONTEXT MANAGEMENT *)
 
-let emptyctx =
+let emptytctx =
   []
 ;;
 
-let addbinding ctx x bind =
+let emptyvctx =
+  []
+;;
+
+let addtbinding ctx x bind =
   (x, bind) :: ctx
 ;;
 
-let getbinding ctx x =
+let addvbinding ctx x bind =
+  (x, bind) :: ctx
+;;
+
+let gettbinding ctx x =
   List.assoc x ctx
 ;;
 
+let getvbinding ctx x =
+  List.assoc x ctx
+;;
 
 (* TYPE MANAGEMENT (TYPING) *)
 
@@ -51,8 +66,22 @@ let rec string_of_ty ty = match ty with
       "Nat"
   | TyArr (ty1, ty2) ->
       "(" ^ string_of_ty ty1 ^ ")" ^ " -> " ^ "(" ^ string_of_ty ty2 ^ ")"
-;;
+  ;;
 
+let execute (vctx, tctx) = function
+  Eval tm ->
+    let tyTm = typeof tctx tm in
+    let tm' = eval vctx tm in
+    print_endline("-: " ^ string_of_ty tyTm ^ " = " ^ string_of_term tm')
+    (vctx, tctx)
+
+  | Bind (s, tm) ->
+    let tyTm = typeof tctx tm in
+    let tm' = eval vctx tm in
+    print_endline("-: " ^ string_of_ty tyTm ^ " = " ^ string_of_term tm')
+    (vctx, tctx)
+  ;;
+(*  *)
 exception Type_error of string
 ;;
 
@@ -95,12 +124,12 @@ let rec typeof ctx tm = match tm with
 
     (* T-Var *)
   | TmVar x ->
-      (try getbinding ctx x with
+      (try gettbinding ctx x with
        _ -> raise (Type_error ("no binding type for variable " ^ x)))
 
     (* T-Abs *)
   | TmAbs (x, tyT1, t2) ->
-      let ctx' = addbinding ctx x tyT1 in
+      let ctx' = addtbinding ctx x tyT1 in
       let tyT2 = typeof ctx' t2 in
       TyArr (tyT1, tyT2)
 
@@ -117,7 +146,7 @@ let rec typeof ctx tm = match tm with
     (* T-Let *)
   | TmLetIn (x, t1, t2) ->
       let tyT1 = typeof ctx t1 in
-      let ctx' = addbinding ctx x tyT1 in
+      let ctx' = addtbinding ctx x tyT1 in
       typeof ctx' t2
     (* T-Fix *)
   | TmFix t1 ->
@@ -340,10 +369,14 @@ let rec eval1 tm = match tm with
   | _ ->
       raise NoRuleApplies
 ;;
+let apply_ctx vctx tm =
+let rec aux vl = 
+  | TmAbs (s, t, t1) -> 
+      TmAbs (s, t, aux (s::vl) t1)
 
-let rec eval tm =
+let rec eval vctx tm =
   try
-    let tm' = eval1 tm in
+    let tm' = eval1 vctx tm in
     eval tm'
   with
     NoRuleApplies -> tm
