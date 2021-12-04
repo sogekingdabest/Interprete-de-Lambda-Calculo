@@ -2,6 +2,7 @@ true
 let x = true in x
 if false then true else false
 0
+let x = true
 succ (succ (succ 0))
 3
 succ (pred 0)

@@ -1,7 +1,6 @@
 
 %{
   open Lambda;;
-  let ctx = emptyctx;;
   
 %}
 
@@ -26,6 +25,7 @@
 %token EQ
 %token COLON
 %token ARROW
+%token QUOTE
 %token EOF
 
 %token PUNTO_COMA_DOBLE
@@ -82,6 +82,8 @@ atomicTerm :
             0 -> TmZero
           | n -> TmSucc (f (n-1))
         in f $1 }
+  | QUOTE STRINGV QUOTE 
+      { TmString $2 }
 
 ty :
     atomicTy
@@ -96,4 +98,6 @@ atomicTy :
       { TyBool }
   | NAT
       { TyNat }
+  | STRINGV
+      { TyString }
 

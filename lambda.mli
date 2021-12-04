@@ -3,6 +3,7 @@ type ty =
     TyBool
   | TyNat
   | TyArr of ty * ty
+  | TyString
 ;;
 
 (*Contexto de tipos*)
@@ -23,6 +24,7 @@ type term =
   | TmApp of term * term
   | TmLetIn of string * term * term
   | TmFix of term
+  | TmString of string
 ;;
 
 (*Contexto de valores*)
@@ -50,11 +52,11 @@ val getvbinding : vcontext -> string -> term;;
 
 val string_of_ty : ty -> string;;
 exception Type_error of string;;
-val typeof : tcontext -> term -> ty;;
+val typeof : vcontext -> tcontext -> term -> ty;;
 
 val string_of_term : term -> string;;
 exception NoRuleApplies;;
-val eval : term -> term;;
+val eval : vcontext -> term -> term;;
 
-val execute : vcontext *tcontext -> command -> vcontext * tcontext;;
-
+(*val execute : vcontext *tcontext -> command -> vcontext * tcontext;;
+*)
