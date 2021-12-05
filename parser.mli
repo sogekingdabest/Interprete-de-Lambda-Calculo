@@ -21,6 +21,13 @@ type token =
   | ARROW
   | QUOTE
   | EOF
+  | CONCAT
+  | PAIR
+  | OPENPAIR
+  | CLOSEPAIR
+  | COMMA
+  | FIRST
+  | SECOND
   | PUNTO_COMA_DOBLE
   | INTV of (int)
   | STRINGV of (string)

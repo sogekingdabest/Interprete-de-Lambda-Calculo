@@ -4,6 +4,7 @@ type ty =
   | TyNat
   | TyArr of ty * ty
   | TyString
+  | TyPair of ty * ty
 ;;
 
 (*Contexto de tipos*)
@@ -25,6 +26,10 @@ type term =
   | TmLetIn of string * term * term
   | TmFix of term
   | TmString of string
+  | TmConcat of term * term
+  | TmPair of term * term
+  | TmFirst of term
+  | TmSecond of term 
 ;;
 
 (*Contexto de valores*)

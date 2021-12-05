@@ -20,9 +20,16 @@ rule token = parse
   | "in"        { IN }
   | "Bool"      { BOOL }
   | "Nat"       { NAT }
+  | "concat"    { CONCAT }
+  | "pair"      { PAIR }
+  | "first"     { FIRST }
+  | "second"     { SECOND }
+  | '{'         { OPENPAIR }
+  | '}'         { CLOSEPAIR }
   | '('         { LPAREN }
   | ')'         { RPAREN }
   | '.'         { DOT }
+  | ','         { COMMA }
   | '='         { EQ }
   | ':'         { COLON }
   | "->"        { ARROW }

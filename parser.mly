@@ -27,6 +27,13 @@
 %token ARROW
 %token QUOTE
 %token EOF
+%token CONCAT
+%token PAIR
+%token OPENPAIR
+%token CLOSEPAIR
+%token COMMA
+%token FIRST
+%token SECOND
 
 %token PUNTO_COMA_DOBLE
 
@@ -55,6 +62,14 @@ term :
       { TmLetIn ($2, $4, $6) }
   | LETREC STRINGV COLON ty EQ term IN term
     {TmLetIn ($2, TmFix (TmAbs ($2, $4, $6)), $8) }
+  | CONCAT term term
+    { TmConcat ($2,$3) }
+  | OPENPAIR term COMMA term CLOSEPAIR
+    { TmPair ($2, $4)}
+  | FIRST term
+   { TmFirst $2 }
+  | SECOND term
+   { TmSecond $2 }
     
 appTerm :
     atomicTerm
@@ -67,6 +82,8 @@ appTerm :
       { TmIsZero $2 }
   | appTerm atomicTerm
       { TmApp ($1, $2) }
+  | CONCAT appTerm appTerm
+     { TmConcat ($2,$3) }
 
 atomicTerm :
     LPAREN term RPAREN

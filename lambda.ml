@@ -5,6 +5,7 @@ type ty =
   | TyNat
   | TyArr of ty * ty
   | TyString
+  | TyPair of ty * ty
 ;;
 
 type tcontext =
@@ -25,6 +26,10 @@ type term =
   | TmLetIn of string * term * term
   | TmFix of term
   | TmString of string
+  | TmConcat of term * term
+  | TmPair of term * term
+  | TmFirst of term
+  | TmSecond of term 
 ;;
 
 type vcontext =
@@ -74,6 +79,8 @@ let rec string_of_ty ty = match ty with
       "(" ^ string_of_ty ty1 ^ ")" ^ " -> " ^ "(" ^ string_of_ty ty2 ^ ")"
   | TyString ->
     "String"
+  | TyPair (ty1, ty2) ->
+    "{" ^ string_of_ty ty1 ^ ", " ^ string_of_ty ty2 ^ "}"
   ;;
 
 (*  *)
@@ -156,8 +163,32 @@ let rec typeof vctx tctx tm = match tm with
 
   | TmString t ->
     TyString 
-        ;;
+  
+  | TmConcat (t1, t2) ->
+    let tyT1 = typeof vctx tctx t1 in
+    let tyT2 = typeof vctx tctx t2 in
+      (match (tyT1, tyT2) with
+          (TyString, TyString) -> TyString
+          | _ -> raise (Type_error "the term must be type string"))
+  | TmPair (t1, t2) ->
+    let tyT1 = typeof vctx tctx t1 in
+    let tyT2 = typeof vctx tctx t2 in
+      TyPair (tyT1, tyT2)
 
+  | TmFirst t ->
+    (match t with 
+      TmPair (t1, t2) -> 
+        let tyT = typeof vctx tctx t1 in
+        tyT
+      | _ -> raise (Type_error "the term must be a tuple"))
+
+  | TmSecond t ->
+    (match t with
+      TmPair (t1, t2) ->
+        let tyT = typeof vctx tctx t2 in
+        tyT
+      | _ -> raise (Type_error "the term must be a tuple"))
+;;
 (* TERMS MANAGEMENT (EVALUATION) *)
 
 let rec string_of_term = function
@@ -193,6 +224,14 @@ let rec string_of_term = function
       "(fix " ^ string_of_term t ^ ")"
   | TmString t ->
     t
+  | TmConcat (t1, t2) ->
+    string_of_term t1 ^ string_of_term t2
+  | TmPair (t1, t2) ->
+    "{" ^ string_of_term t1 ^ ", " ^ string_of_term t2 ^ "}"
+  | TmFirst t -> 
+    string_of_term t
+  | TmSecond t ->
+    string_of_term t
 ;;
 
 let rec ldif l1 l2 = match l1 with
@@ -232,6 +271,14 @@ let rec free_vars tm = match tm with
       free_vars t
   | TmString t ->
     [t]
+  | TmConcat (t1, t2) ->
+    [string_of_term t1 ^ string_of_term t2]
+  | TmPair (t1, t2) ->
+    lunion (free_vars t1) (free_vars t2)
+  | TmFirst t ->
+    free_vars t 
+  | TmSecond t ->
+    free_vars t
 ;;
 
 let rec fresh_name x l =
@@ -244,7 +291,7 @@ let rec subst x s tm = match tm with
   | TmFalse ->
       TmFalse
   | TmIf (t1, t2, t3) ->
-      TmIf (subst x s t1, subst x s t2, subst x s t3)
+      (TmIf (subst x s t1, subst x s t2, subst x s t3))
   | TmZero ->
       TmZero
   | TmSucc t ->
@@ -275,6 +322,14 @@ let rec subst x s tm = match tm with
         TmFix (subst x s t)   
   | TmString t ->
     TmString t
+  | TmConcat (t1, t2) ->
+    TmString (string_of_term (subst x s t1) ^ string_of_term (subst x s t2))
+  | TmPair (t1, t2) ->
+    TmPair (subst x s t1, subst x s t2)
+  | TmFirst t -> 
+    TmFirst (subst x s t)
+  | TmSecond t ->
+    TmSecond (subst x s t)
 ;;
 
 let rec isnumericval tm = match tm with
@@ -374,6 +429,28 @@ let rec eval1 vctx tm = match tm with
   | TmVar y ->
     getvbinding vctx y
 
+  | TmConcat (t1, t2) ->
+    let t1' = eval1 vctx t1 in
+    let t2' = eval1 vctx t2 in
+    TmString (string_of_term t1' ^ string_of_term t2')
+  
+  | TmPair (t1, t2) ->
+    let t1' = eval1 vctx t1 in
+    let t2' = eval1 vctx t2 in
+    TmPair (t1', t2')
+  
+  | TmFirst t -> 
+    (match t with 
+    TmPair (t1, t2) ->
+      let t' = eval1 vctx t1 in
+      t'
+    | _ -> raise (Type_error "the term must be a tuple"))
+  | TmSecond t ->
+    (match t with
+    TmPair (t1, t2) -> 
+      let t' = eval1 vctx t2 in
+      t'
+    | _ -> raise (Type_error "the term must be a tuple"))
   | _ ->
       raise NoRuleApplies
 ;;
@@ -406,6 +483,20 @@ let apply_ctx vctx tm =
       TmFix (aux vl t)
     | TmString t ->
       TmString t
+    | TmConcat (t1, t2) ->
+      TmConcat (aux vl t1, aux vl t2)
+    | TmPair (t1, t2) ->
+      TmPair (aux vl t1, aux vl t2)
+    | TmFirst t -> 
+      (match t with
+      TmPair (t1, t2) ->
+        TmFirst (aux vl t1)
+      | _ -> raise (Type_error "the term must be a tuple"))
+    | TmSecond t ->
+      (match t with
+      TmPair (t1, t2) ->
+        TmSecond (aux vl t2)
+      | _ -> raise (Type_error "the term must be a tuple"))
   in aux [] tm
 ;;
 
