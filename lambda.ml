@@ -170,23 +170,30 @@ let rec typeof vctx tctx tm = match tm with
       (match (tyT1, tyT2) with
           (TyString, TyString) -> TyString
           | _ -> raise (Type_error "the term must be type string"))
+
   | TmPair (t1, t2) ->
     let tyT1 = typeof vctx tctx t1 in
     let tyT2 = typeof vctx tctx t2 in
       TyPair (tyT1, tyT2)
-
+    (*
   | TmFirst t ->
     (match t with 
       TmPair (t1, t2) -> 
         let tyT = typeof vctx tctx t1 in
         tyT
+      | TmVar tPair -> 
+      | _ -> raise (Type_error "the term must be a tuple"))
+        *)
+  | TmFirst t ->
+    (match typeof vctx tctx t with 
+      TyPair (t1, t2) -> 
+       t1
       | _ -> raise (Type_error "the term must be a tuple"))
 
   | TmSecond t ->
-    (match t with
-      TmPair (t1, t2) ->
-        let tyT = typeof vctx tctx t2 in
-        tyT
+    (match typeof vctx tctx t with 
+      TyPair (t1, t2) -> 
+      t2
       | _ -> raise (Type_error "the term must be a tuple"))
 ;;
 (* TERMS MANAGEMENT (EVALUATION) *)
@@ -440,20 +447,21 @@ let rec eval1 vctx tm = match tm with
     TmPair (t1', t2')
   
   | TmFirst t -> 
-    (match t with 
-    TmPair (t1, t2) ->
-      let t' = eval1 vctx t1 in
-      t'
-    | _ -> raise (Type_error "the term must be a tuple"))
+    (match eval1 vctx t with 
+      TmPair (t1, t2) -> 
+      t1
+    | _ -> raise NoRuleApplies)
+
   | TmSecond t ->
-    (match t with
-    TmPair (t1, t2) -> 
-      let t' = eval1 vctx t2 in
-      t'
-    | _ -> raise (Type_error "the term must be a tuple"))
+    (match eval1 vctx t with 
+      TmPair (t1, t2) -> 
+      t2
+    | _ -> raise NoRuleApplies)
   | _ ->
       raise NoRuleApplies
 ;;
+
+exception CantApplyContext;;
 
 let apply_ctx vctx tm =
   let rec aux vl = function
@@ -491,12 +499,12 @@ let apply_ctx vctx tm =
       (match t with
       TmPair (t1, t2) ->
         TmFirst (aux vl t1)
-      | _ -> raise (Type_error "the term must be a tuple"))
+      | _ -> raise CantApplyContext)
     | TmSecond t ->
       (match t with
       TmPair (t1, t2) ->
         TmSecond (aux vl t2)
-      | _ -> raise (Type_error "the term must be a tuple"))
+      | _ -> raise CantApplyContext)
   in aux [] tm
 ;;
 
