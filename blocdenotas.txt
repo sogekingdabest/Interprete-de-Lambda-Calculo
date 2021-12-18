@@ -1,0 +1,7 @@
+x = {id=1};
+y = {id=1,nombre="yoan"};
+
+f = L x : {id: Nat}. x;
+g = L x : Nat. x;
+
+h = L x : {Nat, Nat}. x.1;

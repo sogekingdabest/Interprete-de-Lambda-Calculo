@@ -1,4 +1,10 @@
 {
+  
+(*
+Authors:
+      Ángel Álvarez Rey
+      Daniel Olañeta Fariña
+*)
   open Parser;;
   exception Lexical_error;; 
 }
@@ -22,8 +28,8 @@ rule token = parse
   | "Nat"       { NAT }
   | "concat"    { CONCAT }
   | "pair"      { PAIR }
-  | "first"     { FIRST }
-  | "second"     { SECOND }
+  | ".1"        { FIRST }
+  | ".2"        { SECOND }
   | '{'         { OPENPAIR }
   | '}'         { CLOSEPAIR }
   | '('         { LPAREN }

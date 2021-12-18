@@ -1,10 +1,15 @@
-
+(*
+Authors:
+      Ángel Álvarez Rey
+      Daniel Olañeta Fariña
+*)
 type ty =
     TyBool
   | TyNat
   | TyArr of ty * ty
   | TyString
   | TyPair of ty * ty
+  | TyRecord of (string * ty) list
 ;;
 
 (*Contexto de tipos*)
@@ -30,6 +35,8 @@ type term =
   | TmPair of term * term
   | TmFirst of term
   | TmSecond of term 
+  | TmRecord of (string * term) list
+  | TmProjRecord of term * string
 ;;
 
 (*Contexto de valores*)
@@ -61,7 +68,7 @@ val typeof : vcontext -> tcontext -> term -> ty;;
 
 val string_of_term : term -> string;;
 exception NoRuleApplies;;
-val eval : vcontext -> term -> term;;
+val eval : vcontext -> term -> bool -> term;;
 
 (*val execute : vcontext *tcontext -> command -> vcontext * tcontext;;
 *)
